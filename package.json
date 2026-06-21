@@ -1,6 +1,6 @@
 {
   "name": "@olaservo/mcp-wrappers",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Generate typed TypeScript wrappers for MCP tools so agents can call them as code (the \"MCP as code\" pattern), plus the runtime bridge and a staleness-aware lifecycle.",
   "type": "module",
   "exports": {

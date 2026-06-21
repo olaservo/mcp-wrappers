@@ -58,6 +58,8 @@ export async function ensureWrappers(
     regenerate = true,
     timeoutMs = 10000,
     runtimeImport,
+    interactive = true,
+    oauth,
     verbose = true,
   } = options;
 
@@ -111,6 +113,8 @@ export async function ensureWrappers(
       skillsDir,
       timeoutMs,
       runtimeImport,
+      interactive,
+      oauth,
       verbose,
     });
 

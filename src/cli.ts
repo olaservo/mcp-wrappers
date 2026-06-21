@@ -44,8 +44,13 @@ Options:
                          (default: @olaservo/mcp-wrappers/runtime)
   --no-skill             generate: skip the per-server skill emission
   --no-regenerate        ensure: report status only, never regenerate
+  --no-interactive       Do not open a browser for OAuth servers (fail instead)
+  --callback-port=<n>    Localhost port for the OAuth redirect (default: 3334)
+  --oauth-store=<dir>    Where to cache OAuth tokens (default: ~/.mcp-wrappers/oauth)
   --quiet                Suppress progress logging
   -h, --help             Show this help
+
+For OAuth 2.1 servers, add "auth": "oauth" to the server's entry in .mcp.json.
 `);
 }
 
@@ -59,11 +64,21 @@ async function main(): Promise<void> {
   }
 
   const verbose = !flags.has("quiet");
+  const oauth = values.has("callback-port") || values.has("oauth-store")
+    ? {
+        callbackPort: values.has("callback-port")
+          ? parseInt(values.get("callback-port")!, 10)
+          : undefined,
+        storeDir: values.get("oauth-store"),
+      }
+    : undefined;
   const common = {
     configPath: values.get("config"),
     outputDir: values.get("output"),
     skillsDir: values.get("skills"),
     runtimeImport: values.get("runtime-import"),
+    interactive: !flags.has("no-interactive"),
+    oauth,
     verbose,
   };
   const timeout = values.has("timeout") ? parseInt(values.get("timeout")!, 10) : undefined;

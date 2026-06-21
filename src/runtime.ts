@@ -1,23 +1,27 @@
 // MCP runtime bridge — connects generated wrapper functions to live MCP servers.
 // This is the module generated wrappers import `callMCPTool` from.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { createTransport } from "./transport.js";
+import { connectClient } from "./connect.js";
 import { loadMCPConfigWithEnvSubstitution } from "./config.js";
-import type { MCPConfig, RuntimeOptions } from "./types.js";
+import type { MCPConfig, OAuthOptions, RuntimeOptions } from "./types.js";
 
 const mcpClients = new Map<string, Client>();
 
 let runtimeConfigPath = "./.mcp.json";
 let runtimeConfig: MCPConfig | undefined;
+let runtimeInteractive = true;
+let runtimeOAuth: OAuthOptions | undefined;
 
 /**
  * Configure how the runtime resolves server connection details. Call once at
- * startup if your `.mcp.json` is not at `./.mcp.json`, or to inject a
- * pre-resolved (already env-substituted) config.
+ * startup if your `.mcp.json` is not at `./.mcp.json`, to inject a pre-resolved
+ * (already env-substituted) config, or to tune the OAuth flow.
  */
 export function configureRuntime(options: RuntimeOptions): void {
   if (options.configPath) runtimeConfigPath = options.configPath;
   if (options.config) runtimeConfig = options.config;
+  if (options.interactive !== undefined) runtimeInteractive = options.interactive;
+  if (options.oauth) runtimeOAuth = options.oauth;
 }
 
 /**
@@ -93,9 +97,14 @@ async function connectToMCPServer(serverName: string): Promise<Client> {
     throw new Error(`MCP server '${serverName}' not found in config`);
   }
 
-  const transport = createTransport(serverConfig);
-  const client = new Client({ name: "agent-mcp-client", version: "1.0.0" }, { capabilities: {} });
-  await client.connect(transport);
+  const client = await connectClient({
+    serverName,
+    serverConfig,
+    clientInfo: { name: "agent-mcp-client", version: "1.0.0" },
+    interactive: runtimeInteractive,
+    oauth: runtimeOAuth,
+    log: (m) => console.log(m),
+  });
   console.log(`[MCP Client] Connected to ${serverName} server`);
   return client;
 }

@@ -17,7 +17,23 @@ export interface MCPServerConfig {
   url?: string;
   /** http: extra request headers (e.g. Authorization). */
   headers?: Record<string, string>;
+  /**
+   * http: set to "oauth" for servers protected by OAuth 2.1. The library runs
+   * the authorization-code + PKCE flow (with dynamic client registration) and
+   * caches tokens. Omit for static-credential servers (use `headers` instead).
+   */
+  auth?: "oauth";
   [key: string]: unknown;
+}
+
+/** Tuning for the OAuth flow (interactive servers). */
+export interface OAuthOptions {
+  /** Directory to persist client registration + tokens. Default: ~/.mcp-wrappers/oauth. */
+  storeDir?: string;
+  /** Localhost port for the OAuth redirect URI. Default: 3334. */
+  callbackPort?: number;
+  /** client_name used during dynamic client registration. Default: mcp-wrappers. */
+  clientName?: string;
 }
 
 export interface MCPConfig {
@@ -50,6 +66,10 @@ export interface GenerateWrappersOptions {
    * vendored client checked in alongside the wrappers.
    */
   runtimeImport?: string;
+  /** Permit the interactive browser OAuth flow for `auth: "oauth"` servers. Default: true. */
+  interactive?: boolean;
+  /** OAuth flow tuning (token store dir, callback port, client name). */
+  oauth?: OAuthOptions;
   /** Log progress to the console. Default: true. */
   verbose?: boolean;
 }
@@ -81,6 +101,10 @@ export interface EnsureWrappersOptions {
   timeoutMs?: number;
   /** Module specifier passed through to the generator. */
   runtimeImport?: string;
+  /** Permit the interactive browser OAuth flow for `auth: "oauth"` servers. Default: true. */
+  interactive?: boolean;
+  /** OAuth flow tuning (token store dir, callback port, client name). */
+  oauth?: OAuthOptions;
   /** Log progress to the console. Default: true. */
   verbose?: boolean;
 }
@@ -98,4 +122,8 @@ export interface RuntimeOptions {
   configPath?: string;
   /** Pre-resolved config (already env-substituted). Overrides `configPath` when set. */
   config?: MCPConfig;
+  /** Permit the interactive browser OAuth flow for `auth: "oauth"` servers. Default: true. */
+  interactive?: boolean;
+  /** OAuth flow tuning (token store dir, callback port, client name). */
+  oauth?: OAuthOptions;
 }

@@ -1,10 +1,9 @@
 // Core generator: connect to an MCP server, list its tools, and emit typed
 // TypeScript wrapper files plus a server skill catalog.
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { compile } from "json-schema-to-typescript";
 import fs from "fs/promises";
 import path from "path";
-import { createTransport } from "./transport.js";
+import { connectClient } from "./connect.js";
 import { loadMCPConfigWithEnvSubstitution } from "./config.js";
 import { generateServerSkill } from "./catalog.js";
 import type {
@@ -12,6 +11,7 @@ import type {
   GenerateServerResult,
   GenerationMetadata,
   MCPServerConfig,
+  OAuthOptions,
 } from "./types.js";
 
 const DEFAULT_RUNTIME_IMPORT = "@olaservo/mcp-wrappers/runtime";
@@ -25,6 +25,8 @@ interface ResolvedOptions {
   timeoutMs: number;
   emitSkill: boolean;
   runtimeImport: string;
+  interactive: boolean;
+  oauth?: OAuthOptions;
   log: Logger;
 }
 
@@ -37,6 +39,8 @@ function resolveOptions(options: GenerateWrappersOptions = {}): ResolvedOptions 
     timeoutMs: options.timeoutMs ?? 30000,
     emitSkill: options.emitSkill ?? true,
     runtimeImport: options.runtimeImport ?? DEFAULT_RUNTIME_IMPORT,
+    interactive: options.interactive ?? true,
+    oauth: options.oauth,
     log: verbose ? (msg: string) => console.log(msg) : () => {},
   };
 }
@@ -44,10 +48,7 @@ function resolveOptions(options: GenerateWrappersOptions = {}): ResolvedOptions 
 // Timeout wrapper for async operations.
 function withTimeout<T>(promise: Promise<T>, ms: number, operation: string): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error(`Operation '${operation}' timed out after ${ms}ms`));
-    }, ms);
-
+    const timer = setTimeout(() => reject(new Error(`Operation '${operation}' timed out after ${ms}ms`)), ms);
     promise.then(
       (result) => {
         clearTimeout(timer);
@@ -111,10 +112,15 @@ export async function generateServer(
   const startTime = Date.now();
   opts.log(`\nGenerating wrappers for server: ${serverName}`);
 
-  const transport = createTransport(serverConfig);
-  const client = new Client({ name: "wrapper-generator", version: "1.0.0" }, { capabilities: {} });
-
-  await withTimeout(client.connect(transport), opts.timeoutMs, `connecting to ${serverName}`);
+  const client = await connectClient({
+    serverName,
+    serverConfig,
+    clientInfo: { name: "wrapper-generator", version: "1.0.0" },
+    timeoutMs: opts.timeoutMs,
+    interactive: opts.interactive,
+    oauth: opts.oauth,
+    log: opts.log,
+  });
   opts.log(`Connected to ${serverName} MCP server`);
 
   try {
