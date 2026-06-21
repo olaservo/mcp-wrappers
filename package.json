@@ -36,6 +36,14 @@
   ],
   "author": "olaservo",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olaservo/mcp-wrappers.git"
+  },
+  "bugs": {
+    "url": "https://github.com/olaservo/mcp-wrappers/issues"
+  },
+  "homepage": "https://github.com/olaservo/mcp-wrappers#readme",
   "files": [
     "dist",
     "src",
