@@ -44,6 +44,9 @@
     "url": "https://github.com/olaservo/mcp-wrappers/issues"
   },
   "homepage": "https://github.com/olaservo/mcp-wrappers#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "src",
